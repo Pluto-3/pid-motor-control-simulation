@@ -1,297 +1,138 @@
-# pid-motor-control-simulation
-Discrete-time PID control simulation of a first-order motor model with actuator saturation, measurement noise, derivative filtering, and anti-windup logic.
+# PID Motor Control Simulation (Discrete-Time)
 
-PID Motor Control Simulation (Discrete-Time)
-Overview
+## Overview
 
-This project implements a discrete-time PID controller regulating a first-order motor model. The simulation includes:
+This project implements a discrete-time PID controller regulating a first-order motor model.
 
-Actuator saturation
+The simulation includes:
 
-Measurement noise
+- Actuator saturation
+- Measurement noise (Gaussian)
+- Filtered derivative action
+- Anti-windup (conditional integration)
+- Step setpoint tracking
 
-Filtered derivative action
+The goal is to study real-world PID behavior under non-ideal conditions.
 
-Anti-windup (conditional integration)
 
-Step setpoint tracking
+---
 
-The objective is to study PID behavior under realistic non-ideal conditions.
+## System Model
 
-System Model
-Plant (First-Order Motor Model)
+The motor is modeled as a first-order system:
 
-The motor is modeled as:
-
-𝑑
-𝜔
-𝑑
-𝑡
-=
-1
-𝜏
-(
-𝐾
-𝑢
-−
-𝜔
-)
-dt
-dω
-	​
-
-=
-τ
-1
-	​
-
-(Ku−ω)
+dω/dt = (1/τ) * (K * u - ω)
 
 Where:
 
-𝜔
-ω = motor speed
+- ω = motor speed
+- u = control input (voltage)
+- τ = motor time constant
+- K = motor gain
 
-𝑢
-u = control input (voltage)
+The system is discretized using Euler integration.
 
-𝜏
-τ = time constant
 
-𝐾
-K = motor gain
+---
 
-Discretized using Euler integration.
+## PID Controller
 
-PID Controller
-𝑢
-(
-𝑡
-)
-=
-𝐾
-𝑝
-𝑒
-(
-𝑡
-)
-+
-𝐾
-𝑖
-∫
-𝑒
-(
-𝑡
-)
-𝑑
-𝑡
-+
-𝐾
-𝑑
-𝑒
-˙
-(
-𝑡
-)
-u(t)=K
-p
-	​
-
-e(t)+K
-i
-	​
-
-∫e(t)dt+K
-d
-	​
-
-e
-˙
-(t)
+u(t) = Kp * e(t) + Ki * ∫e(t)dt + Kd * de(t)/dt
 
 Where:
 
-𝑒
-(
-𝑡
-)
-=
-𝑟
-(
-𝑡
-)
-−
-𝑦
-(
-𝑡
-)
-e(t)=r(t)−y(t)
-
-Features Implemented
-1️⃣ Measurement Noise
-
-Gaussian noise added to measured speed:
-
-measured_speed = omega + np.random.normal(0, sigma)
-2️⃣ Derivative Filtering
-
-Pure derivative amplifies noise.
-Implemented filtered derivative:
-
-𝐷
-(
-𝑠
-)
-=
-𝐾
-𝑑
-𝑠
-1
-+
-𝜏
-𝑑
-𝑠
-D(s)=
-1+τ
-d
-	​
-
-s
-K
-d
-	​
-
-s
-	​
+- e(t) = setpoint - measured_speed
 
 
-Discrete form:
+### Implemented Features
 
-𝑑
-𝑘
-=
-𝑑
-𝑘
-−
-1
-+
-𝛼
-(
-𝑑
-𝑟
-𝑎
-𝑤
-−
-𝑑
-𝑘
-−
-1
-)
-d
-k
-	​
+1) Measurement Noise  
+Gaussian noise is added to the measured speed.
 
-=d
-k−1
-	​
+2) Derivative Filtering  
+To prevent noise amplification, the derivative term is filtered using:
 
-+α(d
-raw
-	​
+D(s) = (Kd * s) / (1 + τd * s)
 
-−d
-k−1
-	​
+Discrete implementation:
 
-)
+d_k = d_k-1 + α (d_raw - d_k-1)
 
 Where:
 
-𝛼
-=
-𝑑
-𝑡
-𝜏
-𝑑
-+
-𝑑
-𝑡
-α=
-τ
-d
-	​
+α = dt / (τd + dt)
 
-+dt
-dt
-	​
+This reduces high-frequency noise sensitivity.
 
-
-This reduces high-frequency noise amplification.
-
-3️⃣ Actuator Saturation
-
-Voltage constrained to:
+3) Actuator Saturation  
+Control voltage is limited to a fixed range:
 
 u ∈ [min_voltage, max_voltage]
-4️⃣ Anti-Windup (Conditional Integration)
 
-Integral accumulates only if control signal is not saturated:
+4) Anti-Windup (Conditional Integration)  
+The integral term is updated only when the actuator is not saturated.
 
-if u == u_unsat:
-    error_integral += error * dt
 
-Prevents excessive overshoot due to integral windup.
+---
 
-Simulation Parameters
-Parameter	Value
-dt	0.01 s
-Total Time	10 s
-τ	0.5
-K_motor	1.0
-Kp	10
-Ki	2
-Kd	3
-Results
+## Simulation Parameters
 
-The simulation produces:
+- dt = 0.01 s
+- Total time = 10 s
+- τ = 0.5
+- K_motor = 1.0
+- Kp = 10.0
+- Ki = 2.0
+- Kd = 3.0
 
-Motor speed vs time
 
-Control input vs time
+---
 
-Measured speed (with noise) vs setpoint
+## Output Plots
 
-Example behaviors observed:
+The simulation generates:
 
-Overshoot due to aggressive Kp and Ki
+- Motor speed vs time
+- Control signal vs time
+- Measured speed (with noise) vs setpoint
 
-Noise amplification in derivative term (before filtering)
 
-Anti-windup reducing post-saturation integral buildup
+---
 
-Tradeoff between derivative filtering and phase lag
+## How to Run
 
-How to Run
+1) Install dependencies:
+
 pip install -r requirements.txt
+
+2) Run the simulation:
+
 python pid_simulation.py
-Engineering Insights
 
-Increasing Kp reduces rise time but increases overshoot.
 
-High Ki improves steady-state error but risks windup.
+---
 
-Kd improves damping but amplifies measurement noise.
+## Engineering Insights
 
-Increasing τ_d reduces noise sensitivity but introduces phase lag.
+- Increasing Kp reduces rise time but increases overshoot.
+- High Ki eliminates steady-state error but risks windup.
+- Kd improves damping but amplifies measurement noise.
+- Increasing τd reduces noise amplification but introduces phase lag.
 
-Future Work
 
-Implement back-calculation anti-windup
+---
 
-Add automatic PID tuning (Ziegler–Nichols / optimization-based)
+## Future Improvements
 
-Compare filtered vs unfiltered derivative
+- Back-calculation anti-windup
+- Automatic PID tuning
+- Second-order plant extension
+- Frequency-domain analysis
+- State-space implementation
 
-Extend plant to second-order model
 
-Add frequency-domain analysis
+---
+
+## License
+
+MIT License
