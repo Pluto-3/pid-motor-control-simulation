@@ -6,9 +6,9 @@ dt = 0.01          # time step (s)
 T = 10             # total simulation time (s)
 time = np.arange(0, T, dt)
 
-# Motor Parameters
-K_motor = 1.0      # motor gain
-tau = 0.5          # motor time constant
+# Motor Params
+K_motor = 1.0      # gain
+tau = 0.5          # time constant
 
 # PID Gains
 Kp = 10.0
@@ -65,7 +65,7 @@ for t in time:
         + Kd * filtered_derivative
     )
 
-    # Apply actuator saturation
+    # Actuator saturation
     u = np.clip(u_unsat, min_voltage, max_voltage)
 
     # Anti-windup (conditional integration)
